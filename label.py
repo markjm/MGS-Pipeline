@@ -87,7 +87,24 @@ def convert_all_pngs_to_jpg(path):
 if __name__ == '__main__':
 
     # Creates graph from saved GraphDef.
+    print('Setting up computation graph.')
     create_graph()
-
+    
+    print('Converting images to correct file type.')
     convert_all_pngs_to_jpg(imageFilePath)
+    print('Done converting. All images are now jpegs.')
+
+    print('Starting inferences')
     run_inference_on_images(imageFilePath)
+    print('Finished all inferences. Terminating.')
+
+
+
+
+
+
+
+
+
+
+
