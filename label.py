@@ -51,8 +51,9 @@ def run_inference_on_image(imagePath):
             score = predictions[node_id]
 
             print('%s - %s (score = %.5f)' % (imagePath[imagePath.index('/')+1:], human_string, score))
-            log.write('%s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], human_string, score))
-        
+            time = imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')]
+            time = time[:time.index('m')] + ':' + time[time.index('m')+1:time.index('s')]
+            log.write('%s, %s, %s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')], human_string, time, score))
             if score < 0.65:
                 shutil.copy(imagePath, reviewFilePath)
 
