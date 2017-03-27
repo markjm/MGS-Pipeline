@@ -9,6 +9,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 imageFilePath = 'images/'
 reviewFilePath = 'review/'
+labeledFilePath = 'labeled/'
 modelFullPath = 'assets/AllPicsModel.pb'
 labelsFullPath = 'assets/AllPicsLabels.txt'
 logPath = 'log.csv'
@@ -56,6 +57,8 @@ def run_inference_on_image(imagePath):
             log.write('%s, %s, %s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')], human_string, time, score))
             if score < 0.65:
                 shutil.copy(imagePath, reviewFilePath)
+            else:
+                shutil.copy(imagePath, labeledFilePath)
 
         answer = labels[top_k[0]]
         return answer
