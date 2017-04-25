@@ -1,4 +1,5 @@
 import os
+import errno
 import shutil
 import numpy as np
 import tensorflow as tf
@@ -12,6 +13,8 @@ reviewFilePath = 'review (Confidence < 0.65)/'
 labeledFilePath = 'labeled (Confidence > 0.65)/'
 modelFullPath = 'assets/output_graph.pb'
 labelsFullPath = 'assets/output_labels.txt'
+
+
 logPath = 'log.csv'
 
 TOP_K = 1
@@ -90,8 +93,18 @@ def convert_all_pngs_to_jpg(path):
         if obj.endswith('.png'):
             convert_png_to_jpg(further_path)
 
+def make_sure_path_exists(path):
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 if __name__ == '__main__':
+    
+    make_sure_path_exists(imageFilePath)
+    make_sure_path_exists(reviewFilePath)
+    make_sure_path_exists(labeledFilePath)
 
     # Creates graph from saved GraphDef.
     print('Setting up computation graph.')
