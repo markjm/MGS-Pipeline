@@ -8,8 +8,8 @@ from PIL import Image
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 imageFilePath = 'images/'
-reviewFilePath = 'review/'
-labeledFilePath = 'labeled/'
+reviewFilePath = 'review (Confidence < 0.65)/'
+labeledFilePath = 'labeled (Confidence > 0.65)/'
 modelFullPath = 'assets/output_graph.pb'
 labelsFullPath = 'assets/output_labels.txt'
 logPath = 'log.csv'
