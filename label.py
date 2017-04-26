@@ -58,7 +58,7 @@ def run_inference_on_image(imagePath):
                 print('%s - %s (score = %.5f)' % (imagePath[imagePath.index('/')+1:], human_string, score))
                 time = imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')]
                 time = time[:time.index('m')] + ':' + time[time.index('m')+1:time.index('s')]
-                log.write('%s, %s, %s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')], human_string, time, score))
+                log.write('%s, %s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], time, human_string, score))
                 if score < 0.65:
                     shutil.copy(imagePath, reviewFilePath)
                 else:
