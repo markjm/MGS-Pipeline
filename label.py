@@ -11,11 +11,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 imageFilePath = 'images/'
 reviewFilePath = 'review (Confidence < 0.65)/'
 labeledFilePath = 'labeled (Confidence > 0.65)/'
-modelFullPath = 'assets/output_graph.pb'
-labelsFullPath = 'assets/output_labels.txt'
+modelFullPath = 'assets/output_graph_all.pb'
+labelsFullPath = 'assets/output_labels_all.txt'
 
 
 logPath = 'log.csv'
+
+copy_images = True
 
 TOP_K = 1
 
@@ -53,18 +55,24 @@ def run_inference_on_image(imagePath):
         for node_id in top_k:
             human_string = labels[node_id]
             score = predictions[node_id]
-            
+            print('%s - %s (score = %.5f)' %
+                  (imagePath[imagePath.index('/')+1:], human_string, score))
+
+            time = ''
             try:
-                print('%s - %s (score = %.5f)' % (imagePath[imagePath.index('/')+1:], human_string, score))
                 time = imagePath[imagePath.rindex('_')+1:imagePath.rindex('.')]
                 time = time[:time.index('m')] + ':' + time[time.index('m')+1:time.index('s')]
-                log.write('%s, %s, %s, %.5f \n' % (imagePath[imagePath.index('/')+1:], time, human_string, score))
+            except:
+                time = '0:0'
+
+            log.write('%s, %s, %s, %.5f \n' %
+                      (imagePath[imagePath.index('/')+1:], time, human_string, score))
+
+            if copy_images:
                 if score < 0.65:
                     shutil.copy(imagePath, reviewFilePath)
                 else:
                     shutil.copy(imagePath, labeledFilePath)
-            except:
-                pass
 
         answer = labels[top_k[0]]
         return answer
