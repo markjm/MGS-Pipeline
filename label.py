@@ -8,17 +8,22 @@ from PIL import Image
 #Disables depracation warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+THRESHOLD_SCORE = 0.65
+
+#Relevant path strings -- move to config file?
 imageFilePath = 'images/'
 reviewFilePath = 'review/'
 labeledFilePath = 'labeled/'
 modelFullPath = 'assets/model-v3.pb'
 labelsFullPath = 'assets/labels-v3.txt'
 
-
 logPath = 'log.csv'
 
+#Option to copy image to folders based on threshold
 copy_images = True
 
+#Inference optionally outputs top k possibilities.
+#Set to 1 with binary classification.
 TOP_K = 1
 
 
@@ -69,7 +74,7 @@ def run_inference_on_image(imagePath):
                       (imagePath[imagePath.index('/')+1:], time, human_string, score))
 
             if copy_images:
-                if score < 0.65:
+                if score < THRESHOLD_SCORE:
                     shutil.copy(imagePath, reviewFilePath)
                 else:
                     shutil.copy(imagePath, labeledFilePath)
