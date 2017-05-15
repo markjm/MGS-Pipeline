@@ -14,12 +14,12 @@ class Root(tk.Tk):
         #initialize menu
         self.config(menu=MenuBar(self))
 
+        self.status = StatusBar(self)
+        self.status.pack(side='bottom', fill='x')
         
         self.appFrame = Application(self)
         self.appFrame.pack(side='top', fill='both', expand='True')
-        
-        self.status = StatusBar(self)
-        self.status.pack(side='bottom', fill='x')
+    
         
 class MenuBar(tk.Menu):
     def __init__(self, parent):
@@ -60,6 +60,7 @@ class StatusBar(ttk.Frame):
 class Application(ttk.Notebook):
     def __init__(self, root):
         ttk.Notebook.__init__(self, root)
+        self.root = root
         
         tab1 = ClassifyFrame(self)
         tab2 = ttk.Frame(self)
@@ -89,6 +90,8 @@ class ClassifyFrame(ttk.Frame):
 
     def __init__(self, master):
         ttk.Frame.__init__(self, master)
+
+        self.status = master.root.status
 
         self.imageFilePath = label.imageFilePath
         self.modelFullPath = label.modelFullPath
@@ -180,7 +183,9 @@ class ClassifyFrame(ttk.Frame):
             self.set(self.button4, base + path)
 
     def run(self):
+        self.status.set('Running classification...')
         label.run()
+        self.status.set('Done Classifying.')
 
 root = Root()
 root.mainloop()
