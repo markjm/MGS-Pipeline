@@ -13,14 +13,15 @@ THRESHOLD_SCORE = 0.65
 #Relevant path strings -- move to config file?
 imageFilePath = 'images/'
 reviewFilePath = 'review/'
-labeledFilePath = 'labeled/'
+reviewNCFilePath = reviewFilePath + 'not_confident/'
+reviewCFilePath = reviewFilePath + 'confident/'
 modelFullPath = 'assets/model-v3.pb'
-labelsFullPath = 'assets/labels-v3.txt'
+labelsFullPath = 'assets/model-v3.txt'
 
-logPath = 'log.csv'
+logFilePath = 'log.csv'
 
 #Option to copy image to folders based on threshold
-copy_images = True
+copyImages = True
 
 #Inference optionally outputs top k possibilities.
 #Set to 1 with binary classification.
@@ -54,7 +55,7 @@ def run_inference_on_image(imagePath):
 
         top_k = predictions.argsort()[TOP_K:][::-1]
         f = open(labelsFullPath, 'rb')
-        log = open(logPath, 'a+')
+        log = open(logFilePath, 'a+')
         lines = f.readlines()
         labels = [w.decode("utf-8").replace("\n", "") for w in lines]
         for node_id in top_k:
@@ -73,11 +74,11 @@ def run_inference_on_image(imagePath):
             log.write('%s, %s, %s, %.5f \n' %
                       (imagePath[imagePath.index('/')+1:], time, human_string, score))
 
-            if copy_images:
+            if copyImages:
                 if score < THRESHOLD_SCORE:
-                    shutil.copy(imagePath, reviewFilePath)
+                    shutil.copy(imagePath, reviewNCFilePath)
                 else:
-                    shutil.copy(imagePath, labeledFilePath)
+                    shutil.copy(imagePath, reviewCFilePath)
 
         answer = labels[top_k[0]]
         return answer
@@ -112,6 +113,32 @@ def make_sure_path_exists(path):
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
+
+def run():
+    
+    
+    reviewNCFilePath = reviewFilePath + 'not_confident/'
+    reviewCFilePath = reviewFilePath + 'confident/'
+
+
+    make_sure_path_exists(imageFilePath)
+    make_sure_path_exists(reviewFilePath)
+    make_sure_path_exists(reviewNCFilePath)
+    make_sure_path_exists(reviewCFilePath)
+
+    
+    # Creates graph from saved GraphDef.
+    print('Setting up computation graph.')
+    create_graph()
+    
+    print('Converting images to correct file type.')
+    convert_all_pngs_to_jpg(imageFilePath)
+    print('Done converting. All images are now jpegs.')
+    
+    print('Starting inferences')
+    run_inference_on_images(imageFilePath)
+    print('Finished all inferences. Terminating.')
+
 
 if __name__ == '__main__':
     
