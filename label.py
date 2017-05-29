@@ -1,37 +1,22 @@
+import sys
 import os
 import errno
 import shutil
+import argparse
 import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-#Disables depracation warnings
+FLAGS = None
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-THRESHOLD_SCORE = 0.65
-
-#Relevant path strings -- move to config file?
-imageFilePath = 'images/'
-reviewFilePath = 'review/'
-reviewNCFilePath = reviewFilePath + 'not_confident/'
-reviewCFilePath = reviewFilePath + 'confident/'
-modelFullPath = 'assets/model-v3.pb'
-labelsFullPath = 'assets/model-v3.txt'
-
-logFilePath = 'log.csv'
-
-#Option to copy image to folders based on threshold
-copyImages = True
-
-#Inference optionally outputs top k possibilities.
-#Set to 1 with binary classification.
 TOP_K = 1
-
 
 def create_graph():
     """Creates a graph from saved GraphDef file and returns a saver."""
     # Creates graph from saved graph_def.pb.
-    with tf.gfile.FastGFile(modelFullPath, 'rb') as f:
+    with tf.gfile.FastGFile(FLAGS.model, 'rb') as f:
         graph_def = tf.GraphDef()
         graph_def.ParseFromString(f.read())
         _ = tf.import_graph_def(graph_def, name='')
@@ -54,8 +39,8 @@ def run_inference_on_image(imagePath):
         predictions = np.squeeze(predictions)
 
         top_k = predictions.argsort()[TOP_K:][::-1]
-        f = open(labelsFullPath, 'rb')
-        log = open(logFilePath, 'a+')
+        f = open(FLAGS.labels, 'rb')
+        log = open(FLAGS.log, 'a+')
         lines = f.readlines()
         labels = [w.decode("utf-8").replace("\n", "") for w in lines]
         for node_id in top_k:
@@ -74,11 +59,11 @@ def run_inference_on_image(imagePath):
             log.write('%s, %s, %s, %.5f \n' %
                       (imagePath[imagePath.index('/')+1:], time, human_string, score))
 
-            if copyImages:
-                if score < THRESHOLD_SCORE:
-                    shutil.copy(imagePath, reviewNCFilePath)
+            if FLAGS.copy_images:
+                if score < FLAGS.threshold:
+                    shutil.copy(imagePath, reviewNC)
                 else:
-                    shutil.copy(imagePath, reviewCFilePath)
+                    shutil.copy(imagePath, reviewC)
 
         answer = labels[top_k[0]]
         return answer
@@ -114,17 +99,24 @@ def make_sure_path_exists(path):
         if exception.errno != errno.EEXIST:
             raise
 
-def run():
+def restricted_float(x):
+    x = float(x)
+    if x < 0.5 or x > 1.0:
+        raise argparse.ArgumentTypeError("%r not in range [0.0, 1.0]"%(x,))
+    return x
+
+def main(_):
     
+    FLAGS.labels = os.path.splitext(FLAGS.model)[0]
     
-    reviewNCFilePath = reviewFilePath + 'not_confident/'
-    reviewCFilePath = reviewFilePath + 'confident/'
+    reviewNC = FLAGS.review + 'not_confident/'
+    reviewC = FLAGS.review + 'confident/'
 
 
-    make_sure_path_exists(imageFilePath)
-    make_sure_path_exists(reviewFilePath)
-    make_sure_path_exists(reviewNCFilePath)
-    make_sure_path_exists(reviewCFilePath)
+    make_sure_path_exists(FLAGS.image_dir)
+    make_sure_path_exists(FLAGS.review)
+    make_sure_path_exists(reviewNC)
+    make_sure_path_exists(reviewC)
 
     
     # Creates graph from saved GraphDef.
@@ -132,31 +124,60 @@ def run():
     create_graph()
     
     print('Converting images to correct file type.')
-    convert_all_pngs_to_jpg(imageFilePath)
+    convert_all_pngs_to_jpg(FLAGS.image_dir)
     print('Done converting. All images are now jpegs.')
     
     print('Starting inferences')
-    run_inference_on_images(imageFilePath)
+    run_inference_on_images(FLAGS.image_dir)
     print('Finished all inferences. Terminating.')
 
 
 if __name__ == '__main__':
-    
-    make_sure_path_exists(imageFilePath)
-    make_sure_path_exists(reviewFilePath)
-    make_sure_path_exists(labeledFilePath)
-
-    # Creates graph from saved GraphDef.
-    print('Setting up computation graph.')
-    create_graph()
-    
-    print('Converting images to correct file type.')
-    convert_all_pngs_to_jpg(imageFilePath)
-    print('Done converting. All images are now jpegs.')
-
-    print('Starting inferences')
-    run_inference_on_images(imageFilePath)
-    print('Finished all inferences. Terminating.')
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+      '--image_dir',
+      type=str,
+      default='images/',
+      help='Path to folders of images to be classified.'
+  )
+  parser.add_argument(
+      '--model',
+      type=str,
+      default='assets/model-v3.pb',
+      help='Where the trained graph is saved.'
+  )
+  parser.add_argument(
+      '--labels',
+      type=str,
+      default='assets/model-v3.txt',
+      help='Where the trained graph\'s labels are saved.'
+  )
+  parser.add_argument(
+      '--review',
+      type=str,
+      default='review/',
+      help='Where reviewed images are copied to if copy_images is set to True.'
+  )
+  parser.add_argument(
+      '--log',
+      type=str,
+      default='log.csv',
+      help='Where the log should be generated.'
+  )
+  parser.add_argument(
+      '--copy_images',
+      type=bool,
+      default=False,
+      help='Should images be copied for review.'
+  )
+  parser.add_argument(
+      '--threshold',
+      type=restricted_float,
+      default=0.65,
+      help='Threshold that images below-which are ignored.'
+  )
+  FLAGS, unparsed = parser.parse_known_args()
+  tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
 
 
 
