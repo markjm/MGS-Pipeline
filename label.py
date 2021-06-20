@@ -4,7 +4,7 @@ import errno
 import shutil
 import argparse
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from PIL import Image
 
 FLAGS = None
@@ -43,9 +43,11 @@ def run_inference_on_image(imagePath):
         log = open(FLAGS.log, 'a+')
         lines = f.readlines()
         labels = [w.decode("utf-8").replace("\n", "") for w in lines]
+        print('------------------RESULTS-------------------------')
         for node_id in top_k:
-            human_string = labels[node_id]
+            human_string = labels[node_id].strip()
             score = predictions[node_id]
+
             print('%s - %s (score = %.5f)' %
                   (imagePath[imagePath.index('/')+1:], human_string, score))
 
@@ -56,7 +58,7 @@ def run_inference_on_image(imagePath):
             except:
                 time = '0:0'
 
-            log.write('%s, %s, %s, %.5f \n' %
+            log.write('%s, %s, %s, %.5f\n' %
                       (imagePath[imagePath.index('/')+1:], time, human_string, score))
 
             if FLAGS.copy_images:
@@ -64,7 +66,7 @@ def run_inference_on_image(imagePath):
                     shutil.copy(imagePath, reviewNC)
                 else:
                     shutil.copy(imagePath, reviewC)
-
+        print('---------------------------------------------------')
         answer = labels[top_k[0]]
         return answer
 
@@ -106,8 +108,6 @@ def restricted_float(x):
     return x
 
 def main(_):
-    
-    FLAGS.labels = os.path.splitext(FLAGS.model)[0]
     
     reviewNC = FLAGS.review + 'not_confident/'
     reviewC = FLAGS.review + 'confident/'
